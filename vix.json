@@ -1,0 +1,46 @@
+{
+  "name": "kv",
+  "namespace": "vix",
+  "version": "0.1.0",
+  "type": "library",
+  "include": "include",
+  "license": "MIT",
+  "description": "Durable local-first key-value engine for Vix, powered by Softadastra Store. Provides structured keys, value encoding, deterministic operations, and a simple developer-facing API for reliable embedded state.",
+  "keywords": [
+    "vix",
+    "kv",
+    "key-value",
+    "storage",
+    "database",
+    "local-first",
+    "offline-first",
+    "durability",
+    "state",
+    "embedded",
+    "store",
+    "wal",
+    "softadastra",
+    "deterministic",
+    "recovery",
+    "persistence",
+    "c++",
+    "cpp",
+    "c++20",
+    "systems",
+    "infrastructure",
+    "library"
+  ],
+  "repository": "https://github.com/vixcpp/kv",
+  "authors": [
+    {
+      "name": "Gaspard Kirira",
+      "github": "Gaspardkirira"
+    }
+  ],
+  "deps": [
+    {
+      "id": "softadastra/store",
+      "version": "0.7.1"
+    }
+  ]
+}
