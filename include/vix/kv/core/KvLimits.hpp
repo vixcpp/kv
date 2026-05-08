@@ -41,12 +41,19 @@ namespace vix::kv::core
     static constexpr std::size_t max_key_segment_size = 1024;
 
     /**
-     * @brief Maximum encoded key size in bytes.
+     * @brief Maximum raw public key size in bytes.
      *
-     * Default: 1 MiB.
+     * This is the maximum total size of all KeyPath segments before
+     * internal encoding.
+     *
+     * Default: 64 KiB.
      */
     static constexpr std::size_t max_key_size =
-        1024ULL * 1024ULL;
+        max_key_segments * max_key_segment_size;
+
+    static_assert(
+        max_key_size <= max_key_segments * max_key_segment_size,
+        "max_key_size must fit within max_key_segments * max_key_segment_size");
 
     /**
      * @brief Maximum value size in bytes.

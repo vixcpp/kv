@@ -295,11 +295,13 @@ namespace vix::kv::storage
 
     if (stream_.is_open())
     {
+      stream_.clear();
       stream_.close();
 
-      if (stream_.fail())
+      if (stream_.bad())
       {
         open_ = false;
+        eof_ = false;
 
         return core::KvResult<void>::err(
             core::KvError::io(
@@ -309,6 +311,7 @@ namespace vix::kv::storage
     }
 
     open_ = false;
+    eof_ = false;
 
     return core::KvResult<void>::ok();
   }

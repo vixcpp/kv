@@ -177,7 +177,7 @@ namespace
     auto options = vix::kv::KvOptions::memory_only();
 
     return expect_true(
-               options.memory_only,
+               options.memory_only_mode,
                "KvOptions::memory_only should enable memory_only") &&
            expect_true(
                !options.auto_flush,
@@ -198,7 +198,7 @@ namespace
 
     const bool ok =
         expect_true(
-            !options.memory_only,
+            !options.memory_only_mode,
             "durable options should not be memory_only") &&
         expect_true(
             options.auto_flush,
@@ -224,7 +224,7 @@ namespace
 
     const bool ok =
         expect_true(
-            !options.memory_only,
+            !options.memory_only_mode,
             "fast options should not be memory_only") &&
         expect_true(
             !options.auto_flush,
@@ -261,7 +261,7 @@ namespace
             db.is_open(),
             "public memory KV should be open") &&
         expect_true(
-            db.options().memory_only,
+            db.options().memory_only_mode,
             "public memory KV should expose memory_only options") &&
         expect_true(
             db.stats().memory_only,

@@ -231,7 +231,7 @@ namespace vix::kv::storage
     if (segment_.id == 0)
     {
       return core::KvResult<void>::err(
-          core::KvError::invalid_argument(
+          core::KvError::storage(
               "segment id must be greater than zero"));
     }
 

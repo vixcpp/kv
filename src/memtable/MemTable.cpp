@@ -111,17 +111,6 @@ namespace vix::kv::memtable
             timestamp_ms));
   }
 
-  core::KvResult<void> MemTable::erase(
-      std::string_view key,
-      std::uint64_t sequence,
-      std::uint64_t timestamp_ms)
-  {
-    return erase(
-        std::string(key),
-        sequence,
-        timestamp_ms);
-  }
-
   core::KvResult<void> MemTable::apply(MemTableEntry entry)
   {
     auto key_validation = validate_key(entry.key);

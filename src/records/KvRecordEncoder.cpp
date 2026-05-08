@@ -182,6 +182,13 @@ namespace vix::kv::records
               "record header size is invalid"));
     }
 
+    if (!vix::kv::records::is_valid(record.header.type))
+    {
+      return core::KvResult<void>::err(
+          core::KvError::corruption(
+              "record type is invalid"));
+    }
+
     if (!record.header.has_sequence())
     {
       return core::KvResult<void>::err(

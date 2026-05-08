@@ -260,14 +260,7 @@ namespace vix::kv::internal
       return core::KvResult<void>::err(encoded_key.error());
     }
 
-    if (!state_.memtable.contains(encoded_key.value()))
-    {
-      ++state_.stats.erase_miss_count;
-
-      return core::KvResult<void>::err(
-          core::KvError::not_found(
-              "key was not found"));
-    }
+    const bool existed = state_.memtable.contains(encoded_key.value());
 
     auto record = make_delete_record(encoded_key.move_value());
 
@@ -287,12 +280,19 @@ namespace vix::kv::internal
       return applied;
     }
 
-    ++state_.stats.erase_count;
+    if (existed)
+    {
+      ++state_.stats.erase_count;
+    }
+    else
+    {
+      ++state_.stats.erase_miss_count;
+    }
+
     state_.refresh_memtable_stats();
 
     return core::KvResult<void>::ok();
   }
-
   bool KvEngine::contains(const keys::KeyPath &key) const
   {
     if (!state_.open)

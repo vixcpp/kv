@@ -111,23 +111,6 @@ namespace vix::kv::index
             timestamp_ms));
   }
 
-  core::KvResult<void> KvIndex::erase(
-      std::string_view key,
-      std::uint64_t segment_id,
-      std::uint64_t offset,
-      std::uint64_t size,
-      std::uint64_t sequence,
-      std::uint64_t timestamp_ms)
-  {
-    return erase(
-        std::string(key),
-        segment_id,
-        offset,
-        size,
-        sequence,
-        timestamp_ms);
-  }
-
   core::KvResult<void> KvIndex::apply(KvIndexEntry entry)
   {
     auto key_validation = validate_key(entry.key);

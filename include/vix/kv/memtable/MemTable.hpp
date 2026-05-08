@@ -139,19 +139,6 @@ namespace vix::kv::memtable
         std::uint64_t timestamp_ms);
 
     /**
-     * @brief Stores a tombstone for a key.
-     *
-     * @param key Encoded key.
-     * @param sequence Sequence number.
-     * @param timestamp_ms Timestamp in milliseconds.
-     * @return Success or KvError.
-     */
-    [[nodiscard]] core::KvResult<void> erase(
-        std::string_view key,
-        std::uint64_t sequence,
-        std::uint64_t timestamp_ms);
-
-    /**
      * @brief Applies an entry directly.
      *
      * If the table already contains a newer sequence, the entry is ignored.

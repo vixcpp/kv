@@ -28,6 +28,7 @@
 #include <filesystem>
 #include <iostream>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -50,6 +51,21 @@ namespace
   }
 
   template <typename T>
+  void print_value(const T &value)
+  {
+    if constexpr (std::is_enum_v<T>)
+    {
+      using Underlying = std::underlying_type_t<T>;
+
+      std::cerr << static_cast<Underlying>(value);
+    }
+    else
+    {
+      std::cerr << value;
+    }
+  }
+
+  template <typename T>
   bool expect_eq(
       const T &actual,
       const T &expected,
@@ -58,8 +74,15 @@ namespace
     if (actual != expected)
     {
       std::cerr << "FAILED: " << message << '\n';
-      std::cerr << "  expected: " << expected << '\n';
-      std::cerr << "  actual  : " << actual << '\n';
+
+      std::cerr << "  expected: ";
+      print_value(expected);
+      std::cerr << '\n';
+
+      std::cerr << "  actual  : ";
+      print_value(actual);
+      std::cerr << '\n';
+
       return false;
     }
 

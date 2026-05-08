@@ -133,7 +133,7 @@ namespace
             db.is_open(),
             "memory database should be open") &&
         expect_true(
-            db.options().memory_only,
+            db.options().memory_only_mode,
             "memory database options should be memory_only") &&
         expect_true(
             !db.stats().wal_enabled,
@@ -168,7 +168,7 @@ namespace
             db.is_open(),
             "durable database should be open") &&
         expect_true(
-            !db.options().memory_only,
+            !db.options().memory_only_mode,
             "durable database should not be memory_only") &&
         expect_true(
             db.stats().wal_enabled,
@@ -208,7 +208,7 @@ namespace
             db.is_open(),
             "fast database should be open") &&
         expect_true(
-            !db.options().memory_only,
+            !db.options().memory_only_mode,
             "fast database should not be memory_only") &&
         expect_true(
             db.stats().wal_enabled,

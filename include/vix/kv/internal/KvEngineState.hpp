@@ -248,10 +248,19 @@ namespace vix::kv::internal
      */
     void refresh_memtable_stats() noexcept
     {
-      stats.key_count = memtable.size();
-      stats.tombstone_count = memtable.tombstone_count();
-      stats.memtable_entries = memtable.raw_size();
+      const auto live = memtable.size();
+      const auto tombstones = memtable.tombstone_count();
+      const auto raw = memtable.raw_size();
+
+      stats.key_count = live;
+      stats.live_keys = live;
+
+      stats.tombstone_count = tombstones;
+      stats.tombstones = tombstones;
+
+      stats.memtable_entries = raw;
       stats.memtable_bytes = memtable.byte_size();
+
       stats.last_sequence = last_sequence;
     }
 

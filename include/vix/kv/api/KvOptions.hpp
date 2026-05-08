@@ -57,6 +57,11 @@ namespace vix::kv::api
     std::filesystem::path path{"data/kv"};
 
     /**
+     * @brief Use an in-memory database with no WAL and no persistence.
+     */
+    bool memory_only_mode{false};
+
+    /**
      * @brief Enable WAL-backed durability.
      */
     bool enable_wal{true};
@@ -174,6 +179,7 @@ namespace vix::kv::api
     {
       KvOptions options(std::move(database_path));
 
+      options.memory_only_mode = false;
       options.enable_wal = true;
       options.auto_flush = true;
       options.create_directories = true;
@@ -197,6 +203,7 @@ namespace vix::kv::api
     {
       KvOptions options(std::move(database_path));
 
+      options.memory_only_mode = false;
       options.enable_wal = true;
       options.auto_flush = false;
       options.create_directories = true;
@@ -221,6 +228,7 @@ namespace vix::kv::api
     {
       KvOptions options;
 
+      options.memory_only_mode = true;
       options.path.clear();
       options.enable_wal = false;
       options.auto_flush = false;
@@ -241,6 +249,11 @@ namespace vix::kv::api
      */
     [[nodiscard]] core::KvConfig to_config() const
     {
+      if (memory_only_mode)
+      {
+        return core::KvConfig::memory_only();
+      }
+
       core::KvConfig config;
 
       config.path = path;
@@ -269,11 +282,6 @@ namespace vix::kv::api
       if (!enable_wal)
       {
         config.wal_path.clear();
-      }
-
-      if (!recover_on_open && !enable_wal && path.empty())
-      {
-        return core::KvConfig::memory_only();
       }
 
       return config;

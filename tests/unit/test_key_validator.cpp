@@ -381,12 +381,30 @@ namespace
 
   bool test_boundary_total_size_is_valid()
   {
-    const std::string segment(
-        core::KvLimits::max_key_size,
-        'a');
-
     keys::KeyPath path;
-    path.push_back(segment);
+
+    std::size_t remaining = core::KvLimits::max_key_size;
+    std::size_t segments_used = 0;
+
+    while (remaining > 0)
+    {
+      if (segments_used >= core::KvLimits::max_key_segments)
+      {
+        return expect_true(
+            false,
+            "KvLimits are inconsistent: max_key_size cannot fit within max_key_segments * max_key_segment_size");
+      }
+
+      const std::size_t chunk_size =
+          remaining > core::KvLimits::max_key_segment_size
+              ? core::KvLimits::max_key_segment_size
+              : remaining;
+
+      path.push_back(std::string(chunk_size, 'a'));
+
+      remaining -= chunk_size;
+      ++segments_used;
+    }
 
     const auto result = keys::KeyValidator::validate(path);
 
