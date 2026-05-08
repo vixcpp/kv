@@ -18,6 +18,7 @@
 
 #include <filesystem>
 #include <utility>
+#include <stdexcept>
 
 namespace vix::kv
 {
@@ -30,6 +31,18 @@ namespace vix::kv
       const api::KvOptions &options)
   {
     return api::Kv::open(options);
+  }
+
+  api::Kv open(std::filesystem::path path)
+  {
+    auto opened = open_durable(std::move(path));
+
+    if (opened.is_err())
+    {
+      throw std::runtime_error(opened.error().to_string());
+    }
+
+    return opened.move_value();
   }
 
   core::KvResult<api::Kv> open_memory()

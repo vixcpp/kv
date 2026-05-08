@@ -101,16 +101,20 @@ set_target_properties(vix_kv PROPERTIES
 # ========================
 # Examples
 # ========================
-if(VIX_KV_BUILD_EXAMPLES AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/examples/CMakeLists.txt")
-    add_subdirectory(examples)
+if(VIX_KV_BUILD_EXAMPLES)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/examples/CMakeLists.txt")
+        add_subdirectory(examples)
+    endif()
 endif()
 
 # ========================
 # Tests
 # ========================
-if(VIX_KV_BUILD_TESTS AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/CMakeLists.txt")
-    enable_testing()
-    add_subdirectory(tests)
+if(VIX_KV_BUILD_TESTS)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/CMakeLists.txt")
+        enable_testing()
+        add_subdirectory(tests)
+    endif()
 endif()
 
 # ========================

@@ -18,6 +18,10 @@
 
 #include <ios>
 #include <system_error>
+#include <span>
+
+#include <vix/kv/records/KvRecordDecoder.hpp>
+#include <vix/kv/records/KvRecordEncoder.hpp>
 
 namespace vix::kv::wal
 {
@@ -158,8 +162,7 @@ namespace vix::kv::wal
     encoded.reserve(
         static_cast<std::size_t>(header.value().total_size()));
 
-    auto encoded_header =
-        records::KvRecordEncoder::encode_header(header.value());
+    auto encoded_header = vix::kv::records::KvRecordEncoder::encode_header(header.value());
 
     if (encoded_header.is_err())
     {
@@ -177,7 +180,7 @@ namespace vix::kv::wal
         payload.value().begin(),
         payload.value().end());
 
-    auto decoded = records::KvRecordDecoder::decode(encoded);
+    auto decoded = vix::kv::records::KvRecordDecoder::decode(encoded);
 
     if (decoded.is_err())
     {

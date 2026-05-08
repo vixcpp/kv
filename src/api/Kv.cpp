@@ -15,7 +15,10 @@
  */
 
 #include <vix/kv/api/Kv.hpp>
-
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <vector>
 #include <string_view>
 
 namespace vix::kv::api
@@ -152,6 +155,109 @@ namespace vix::kv::api
     return set(
         key,
         values::KvValue::from_string(value));
+  }
+
+  void Kv::put(
+      std::string_view key,
+      std::string_view value)
+  {
+    auto result = set(make_key_path(key), value);
+
+    if (result.is_err())
+    {
+      throw std::runtime_error(result.error().to_string());
+    }
+  }
+
+  std::optional<std::string> Kv::get(
+      std::string_view key) const
+  {
+    auto result = get(make_key_path(key));
+
+    if (result.is_err())
+    {
+      if (result.error().code() == core::KvErrorCode::NotFound)
+      {
+        return std::nullopt;
+      }
+
+      throw std::runtime_error(result.error().to_string());
+    }
+
+    return result.value().to_string();
+  }
+
+  core::KvResult<void> Kv::set(
+      std::initializer_list<std::string_view> key,
+      std::string_view value)
+  {
+    return set(
+        make_key_path(key),
+        value);
+  }
+
+  core::KvResult<values::KvValue> Kv::get(
+      std::initializer_list<std::string_view> key) const
+  {
+    return get(make_key_path(key));
+  }
+
+  bool Kv::contains(
+      std::initializer_list<std::string_view> key) const
+  {
+    return contains(make_key_path(key));
+  }
+
+  core::KvResult<Kv::ListResult> Kv::list(
+      std::initializer_list<std::string_view> prefix) const
+  {
+    return list(make_key_path(prefix));
+  }
+
+  keys::KeyPath Kv::make_key_path(
+      std::string_view key)
+  {
+    std::vector<std::string> parts;
+
+    std::size_t start = 0;
+
+    while (start <= key.size())
+    {
+      const std::size_t end = key.find('/', start);
+
+      const std::size_t count =
+          end == std::string_view::npos
+              ? key.size() - start
+              : end - start;
+
+      if (count > 0)
+      {
+        parts.emplace_back(key.substr(start, count));
+      }
+
+      if (end == std::string_view::npos)
+      {
+        break;
+      }
+
+      start = end + 1;
+    }
+
+    return keys::KeyPath(std::move(parts));
+  }
+
+  keys::KeyPath Kv::make_key_path(
+      std::initializer_list<std::string_view> parts)
+  {
+    std::vector<std::string> values;
+    values.reserve(parts.size());
+
+    for (std::string_view part : parts)
+    {
+      values.emplace_back(part);
+    }
+
+    return keys::KeyPath(std::move(values));
   }
 
   core::KvResult<values::KvValue> Kv::get(

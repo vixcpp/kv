@@ -2,20 +2,26 @@
 
 set(VIX_KV_EXAMPLE_OUTPUT_DIR "${CMAKE_BINARY_DIR}/examples")
 
-add_executable(kv_basic basic_kv.cpp)
+add_executable(kv_basic basic.cpp)
 target_link_libraries(kv_basic PRIVATE vix::kv)
 set_target_properties(kv_basic PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${VIX_KV_EXAMPLE_OUTPUT_DIR}"
 )
 
-add_executable(kv_durable_restart durable_restart.cpp)
-target_link_libraries(kv_durable_restart PRIVATE vix::kv)
-set_target_properties(kv_durable_restart PROPERTIES
+add_executable(kv_compact compact.cpp)
+target_link_libraries(kv_compact PRIVATE vix::kv)
+set_target_properties(kv_compact PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${VIX_KV_EXAMPLE_OUTPUT_DIR}"
 )
 
-add_executable(kv_prefix_scan prefix_scan.cpp)
-target_link_libraries(kv_prefix_scan PRIVATE vix::kv)
-set_target_properties(kv_prefix_scan PROPERTIES
+add_executable(kv_list list.cpp)
+target_link_libraries(kv_list PRIVATE vix::kv)
+set_target_properties(kv_list PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${VIX_KV_EXAMPLE_OUTPUT_DIR}"
+)
+
+add_executable(kv_persistent persistent.cpp)
+target_link_libraries(kv_persistent PRIVATE vix::kv)
+set_target_properties(kv_persistent PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${VIX_KV_EXAMPLE_OUTPUT_DIR}"
 )

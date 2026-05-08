@@ -20,6 +20,7 @@
 #include <vix/kv/api/Kv.hpp>
 #include <vix/kv/api/KvOptions.hpp>
 #include <vix/kv/core/KvResult.hpp>
+#include <filesystem>
 
 namespace vix::kv
 {
@@ -39,6 +40,16 @@ namespace vix::kv
    * @return KV handle or KvError.
    */
   [[nodiscard]] core::KvResult<api::Kv> open();
+
+  /**
+   * @brief Opens a durable KV database at a path and returns the handle directly.
+   *
+   * This convenience overload throws std::runtime_error on open failure.
+   *
+   * @param path Database root path.
+   * @return Open KV handle.
+   */
+  [[nodiscard]] api::Kv open(std::filesystem::path path);
 
   /**
    * @brief Opens a KV database with custom options.

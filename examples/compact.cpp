@@ -14,9 +14,11 @@
  *
  */
 
+#include <cstdint>
 #include <filesystem>
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <vix/kv/compaction/Compactor.hpp>
@@ -42,6 +44,11 @@ namespace
   {
     std::cerr << message << '\n';
     return 1;
+  }
+
+  keys::KeyPath key_path(std::vector<std::string> parts)
+  {
+    return keys::KeyPath(std::move(parts));
   }
 
   core::KvResult<std::string> encode_key(
@@ -154,41 +161,55 @@ int main()
 
   auto config = core::KvConfig::durable(root);
 
-  auto user_v1 = make_put({"users", "1", "name"}, "Ada", 1);
+  auto user_v1 = make_put(
+      key_path(std::vector<std::string>{"users", "1", "name"}),
+      "Ada",
+      1);
 
   if (user_v1.is_err())
   {
     return fail("failed to build record: " + user_v1.error().message());
   }
 
-  auto user_v2 = make_put({"users", "1", "name"}, "Ada Lovelace", 2);
+  auto user_v2 = make_put(
+      key_path(std::vector<std::string>{"users", "1", "name"}),
+      "Ada Lovelace",
+      2);
 
   if (user_v2.is_err())
   {
     return fail("failed to build record: " + user_v2.error().message());
   }
 
-  auto temp_value = make_put({"cache", "temp"}, "old", 3);
+  auto temp_value = make_put(
+      key_path(std::vector<std::string>{"cache", "temp"}),
+      "old",
+      3);
 
   if (temp_value.is_err())
   {
     return fail("failed to build record: " + temp_value.error().message());
   }
 
-  auto delete_temp = make_delete({"cache", "temp"}, 4);
+  auto delete_temp = make_delete(
+      key_path(std::vector<std::string>{"cache", "temp"}),
+      4);
 
   if (delete_temp.is_err())
   {
-    return fail("failed to build delete record: " + delete_temp.error().message());
+    return fail(
+        "failed to build delete record: " +
+        delete_temp.error().message());
   }
+
+  std::vector<records::KvRecord> segment_1_records;
+  segment_1_records.push_back(user_v1.move_value());
+  segment_1_records.push_back(temp_value.move_value());
 
   auto segment_1 = write_segment(
       config,
       1,
-      {
-          user_v1.move_value(),
-          temp_value.move_value(),
-      });
+      segment_1_records);
 
   if (segment_1.is_err())
   {
@@ -197,13 +218,14 @@ int main()
         segment_1.error().message());
   }
 
+  std::vector<records::KvRecord> segment_2_records;
+  segment_2_records.push_back(user_v2.move_value());
+  segment_2_records.push_back(delete_temp.move_value());
+
   auto segment_2 = write_segment(
       config,
       2,
-      {
-          user_v2.move_value(),
-          delete_temp.move_value(),
-      });
+      segment_2_records);
 
   if (segment_2.is_err())
   {
@@ -215,11 +237,12 @@ int main()
   const auto output_path =
       storage::FileLayout::segment_path(config, 3);
 
+  std::vector<storage::Segment> input_segments;
+  input_segments.push_back(segment_1.move_value());
+  input_segments.push_back(segment_2.move_value());
+
   auto plan = compaction::Compactor::make_manual_plan(
-      {
-          segment_1.move_value(),
-          segment_2.move_value(),
-      },
+      std::move(input_segments),
       3,
       output_path);
 

@@ -301,7 +301,7 @@ namespace vix::kv::core
      */
     [[nodiscard]] std::string_view code_string() const noexcept
     {
-      return to_string(code_);
+      return core::to_string(code_);
     }
 
     /**

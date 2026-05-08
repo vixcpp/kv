@@ -17,8 +17,11 @@
 #include <vix/kv/storage/DataFileReader.hpp>
 
 #include <ios>
+#include <span>
 #include <system_error>
+
 #include <vix/kv/core/KvLimits.hpp>
+#include <vix/kv/records/KvRecordDecoder.hpp>
 #include <vix/kv/records/KvRecordEncoder.hpp>
 
 namespace vix::kv::storage
@@ -149,7 +152,7 @@ namespace vix::kv::storage
     }
 
     auto encoded_header =
-        records::KvRecordEncoder::encode_header(header.value());
+        vix::kv::records::KvRecordEncoder::encode_header(header.value());
 
     if (encoded_header.is_err())
     {
@@ -171,7 +174,7 @@ namespace vix::kv::storage
         payload.value().begin(),
         payload.value().end());
 
-    auto decoded = records::KvRecordDecoder::decode(encoded);
+    auto decoded = vix::kv::records::KvRecordDecoder::decode(encoded);
 
     if (decoded.is_err())
     {
@@ -405,7 +408,7 @@ namespace vix::kv::storage
 
     std::size_t header_offset = 0;
 
-    auto header = records::KvRecordDecoder::decode_header(
+    auto header = vix::kv::records::KvRecordDecoder::decode_header(
         std::span<const std::uint8_t>(
             header_bytes.value().data(),
             header_bytes.value().size()),
@@ -416,8 +419,7 @@ namespace vix::kv::storage
       return header;
     }
 
-    auto validation =
-        records::KvRecordDecoder::validate_header(header.value());
+    auto validation = vix::kv::records::KvRecordDecoder::validate_header(header.value());
 
     if (validation.is_err())
     {
@@ -425,8 +427,7 @@ namespace vix::kv::storage
           validation.error());
     }
 
-    auto checksum =
-        records::KvRecordDecoder::verify_header_checksum(header.value());
+    auto checksum = vix::kv::records::KvRecordDecoder::verify_header_checksum(header.value());
 
     if (checksum.is_err())
     {

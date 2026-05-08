@@ -21,6 +21,10 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <initializer_list>
+#include <optional>
+#include <string>
+#include <string_view>
 
 #include <vix/kv/api/KvOptions.hpp>
 #include <vix/kv/core/KvError.hpp>
@@ -166,6 +170,58 @@ namespace vix::kv::api
         std::string_view value);
 
     /**
+     * @brief Stores or replaces a string value using a simple text key.
+     *
+     * This convenience method throws std::runtime_error on failure.
+     *
+     * @param key Text key. Slash-separated keys are supported.
+     * @param value Text value.
+     */
+    void put(
+        std::string_view key,
+        std::string_view value);
+
+    /**
+     * @brief Reads a string value using a simple text key.
+     *
+     * Returns std::nullopt when the key does not exist.
+     * Throws std::runtime_error for other failures.
+     *
+     * @param key Text key. Slash-separated keys are supported.
+     * @return Optional string value.
+     */
+    [[nodiscard]] std::optional<std::string> get(
+        std::string_view key) const;
+
+    /**
+     * @brief Stores a string value using initializer-list key parts.
+     *
+     * This fixes calls like:
+     * db.set({"users", "1", "name"}, "Ada");
+     */
+    [[nodiscard]] core::KvResult<void> set(
+        std::initializer_list<std::string_view> key,
+        std::string_view value);
+
+    /**
+     * @brief Reads a value using initializer-list key parts.
+     */
+    [[nodiscard]] core::KvResult<values::KvValue> get(
+        std::initializer_list<std::string_view> key) const;
+
+    /**
+     * @brief Checks a key using initializer-list key parts.
+     */
+    [[nodiscard]] bool contains(
+        std::initializer_list<std::string_view> key) const;
+
+    /**
+     * @brief Lists values using initializer-list prefix parts.
+     */
+    [[nodiscard]] core::KvResult<ListResult> list(
+        std::initializer_list<std::string_view> prefix) const;
+
+    /**
      * @brief Reads a value.
      *
      * @param key Public key path.
@@ -265,6 +321,12 @@ namespace vix::kv::api
   private:
     KvOptions options_{};
     std::unique_ptr<internal::KvEngine> engine_{};
+
+    [[nodiscard]] static keys::KeyPath make_key_path(
+        std::string_view key);
+
+    [[nodiscard]] static keys::KeyPath make_key_path(
+        std::initializer_list<std::string_view> parts);
   };
 
 } // namespace vix::kv::api

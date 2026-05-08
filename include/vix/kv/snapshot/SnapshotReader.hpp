@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <span>
 #include <vector>
 
 #include <vix/kv/core/KvConfig.hpp>
@@ -149,6 +150,7 @@ namespace vix::kv::snapshot
      * @param bytes Snapshot bytes.
      * @param offset Current offset, advanced on success.
      * @param snapshot Output snapshot.
+     * @param entry_count Number of entries to decode.
      * @return Success or KvError.
      */
     [[nodiscard]] static core::KvResult<void>
