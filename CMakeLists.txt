@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 project(vix_kv
     VERSION 0.1.0
-    DESCRIPTION "Vix KV - Durable local-first key-value engine powered by Softadastra"
+    DESCRIPTION "Vix KV - Durable local-first key-value engine"
     LANGUAGES CXX
 )
 
@@ -11,67 +11,64 @@ include(GNUInstallDirs)
 # ========================
 # Options
 # ========================
-option(VIX_KV_BUILD_TESTS "Build kv tests" ON)
-option(VIX_KV_BUILD_EXAMPLES "Build kv examples" ON)
+option(VIX_KV_BUILD_TESTS "Build Vix KV tests" ON)
+option(VIX_KV_BUILD_EXAMPLES "Build Vix KV examples" ON)
 
 # ========================
 # Global settings
 # ========================
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # ========================
-# Dependencies
+# Sources
 # ========================
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.vix/vix_deps.cmake")
-    include("${CMAKE_CURRENT_SOURCE_DIR}/.vix/vix_deps.cmake")
-endif()
+set(VIX_KV_SOURCES
+    src/api/Kv.cpp
+    src/api/Open.cpp
 
-# Try installed/exported package only if target is still missing
-if(NOT TARGET softadastra::store AND NOT TARGET softadastra_store)
-    find_package(softadastra_store CONFIG QUIET)
-    find_package(store CONFIG QUIET)
-endif()
+    src/checksum/Crc32.cpp
 
-set(VIX_KV_STORE_TARGET "")
-if(TARGET softadastra::store)
-    set(VIX_KV_STORE_TARGET softadastra::store)
-elseif(TARGET softadastra_store)
-    set(VIX_KV_STORE_TARGET softadastra_store)
-endif()
+    src/compaction/Compactor.cpp
 
-if(NOT VIX_KV_STORE_TARGET)
-    message(FATAL_ERROR
-        "softadastra::store not found.\n"
-        "Install dependencies with Vix:\n"
-        "  vix add @softadastra/store\n"
-        "  vix install\n"
-        "or provide an installed/exported softadastra_store package."
-    )
-endif()
+    src/index/KvIndex.cpp
+
+    src/internal/KvEngine.cpp
+
+    src/keys/KeyEncoder.cpp
+
+    src/memtable/MemTable.cpp
+
+    src/records/KvRecordEncoder.cpp
+    src/records/KvRecordDecoder.cpp
+
+    src/snapshot/SnapshotWriter.cpp
+    src/snapshot/SnapshotReader.cpp
+
+    src/storage/DataFileWriter.cpp
+    src/storage/DataFileReader.cpp
+    src/storage/SegmentWriter.cpp
+    src/storage/SegmentReader.cpp
+
+    src/utils/AtomicFile.cpp
+
+    src/values/ValueCodec.cpp
+
+    src/wal/KvWalWriter.cpp
+    src/wal/KvWalReader.cpp
+    src/wal/KvWalRecovery.cpp
+)
 
 # ========================
 # Library
 # ========================
-file(GLOB_RECURSE KV_SOURCES
-    CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
-)
-
-add_library(vix_kv ${KV_SOURCES})
+add_library(vix_kv ${VIX_KV_SOURCES})
 add_library(vix::kv ALIAS vix_kv)
 
 target_compile_features(vix_kv PUBLIC cxx_std_20)
 
-target_link_libraries(vix_kv
-    PUBLIC
-        ${VIX_KV_STORE_TARGET}
-)
-
-# ========================
-# Include directories
-# ========================
 target_include_directories(vix_kv
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -84,7 +81,11 @@ target_include_directories(vix_kv
 if(MSVC)
     target_compile_options(vix_kv PRIVATE /W4 /permissive-)
 else()
-    target_compile_options(vix_kv PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(vix_kv PRIVATE
+        -Wall
+        -Wextra
+        -Wpedantic
+    )
 endif()
 
 # ========================
@@ -100,24 +101,46 @@ set_target_properties(vix_kv PROPERTIES
 # ========================
 # Examples
 # ========================
-if(VIX_KV_BUILD_EXAMPLES)
+if(VIX_KV_BUILD_EXAMPLES AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/examples/CMakeLists.txt")
     add_subdirectory(examples)
 endif()
 
 # ========================
 # Tests
 # ========================
-if(VIX_KV_BUILD_TESTS)
+if(VIX_KV_BUILD_TESTS AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/CMakeLists.txt")
     enable_testing()
     add_subdirectory(tests)
 endif()
+
+# ========================
+# Install
+# ========================
+install(
+    TARGETS vix_kv
+    EXPORT vix_kvTargets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+install(
+    DIRECTORY include/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+install(
+    EXPORT vix_kvTargets
+    NAMESPACE vix::
+    FILE vix_kvTargets.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/vix_kv
+)
 
 # ========================
 # Summary
 # ========================
 message(STATUS "------------------------------------------------------")
 message(STATUS "vix::kv configured (${PROJECT_VERSION})")
-message(STATUS "Store target:    ${VIX_KV_STORE_TARGET}")
 message(STATUS "Include dir:     ${CMAKE_CURRENT_SOURCE_DIR}/include")
 message(STATUS "Build tests:     ${VIX_KV_BUILD_TESTS}")
 message(STATUS "Build examples:  ${VIX_KV_BUILD_EXAMPLES}")
