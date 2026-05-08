@@ -10,120 +10,222 @@
  *
  *  Vix KV
  *
- *  Durable WAL-backed example
+ *  Durable persistence example
  *
  */
 
-#include <iostream>
-
 #include <vix/kv/kv.hpp>
+
+#include <filesystem>
+#include <iostream>
+#include <string>
+
+namespace
+{
+  namespace fs = std::filesystem;
+
+  const fs::path data_path()
+  {
+    return fs::path{"examples_data"} / "persistent";
+  }
+
+  int fail(const std::string &message)
+  {
+    std::cerr << message << '\n';
+    return 1;
+  }
+
+  int write_data()
+  {
+    auto kv = vix::kv::open(data_path());
+
+    kv.put("users/1/name", "Ada");
+    kv.put("users/2/name", "Grace");
+    kv.put("settings/theme", "dark");
+
+    auto flushed = kv.flush();
+
+    if (flushed.is_err())
+    {
+      return fail(
+          "failed to flush database: " +
+          flushed.error().message());
+    }
+
+    std::cout << "write phase\n";
+    std::cout << "-----------\n";
+    std::cout << "users/1/name   = Ada\n";
+    std::cout << "users/2/name   = Grace\n";
+    std::cout << "settings/theme = dark\n";
+    std::cout << "size           = " << kv.size() << "\n\n";
+
+    auto closed = kv.close();
+
+    if (closed.is_err())
+    {
+      return fail(
+          "failed to close database after write: " +
+          closed.error().message());
+    }
+
+    return 0;
+  }
+
+  int read_data_after_reopen()
+  {
+    auto kv = vix::kv::open(data_path());
+
+    const auto user_1 = kv.get("users/1/name");
+    const auto user_2 = kv.get("users/2/name");
+    const auto theme = kv.get("settings/theme");
+
+    if (!user_1.has_value())
+    {
+      return fail("failed to recover key: users/1/name");
+    }
+
+    if (!user_2.has_value())
+    {
+      return fail("failed to recover key: users/2/name");
+    }
+
+    if (!theme.has_value())
+    {
+      return fail("failed to recover key: settings/theme");
+    }
+
+    std::cout << "read phase after reopen\n";
+    std::cout << "-----------------------\n";
+    std::cout << "users/1/name   = " << *user_1 << '\n';
+    std::cout << "users/2/name   = " << *user_2 << '\n';
+    std::cout << "settings/theme = " << *theme << '\n';
+    std::cout << "size           = " << kv.size() << '\n';
+
+    const auto stats = kv.stats();
+
+    std::cout << "wal recovered  = "
+              << stats.wal_records_recovered
+              << '\n';
+
+    std::cout << "last sequence  = "
+              << stats.last_sequence
+              << "\n\n";
+
+    auto closed = kv.close();
+
+    if (closed.is_err())
+    {
+      return fail(
+          "failed to close database after reopen: " +
+          closed.error().message());
+    }
+
+    return 0;
+  }
+
+  int delete_and_reopen()
+  {
+    {
+      auto kv = vix::kv::open(data_path());
+
+      auto erased = kv.erase(
+          vix::kv::KeyPath{"users", "1", "name"});
+
+      if (erased.is_err())
+      {
+        return fail(
+            "failed to erase users/1/name: " +
+            erased.error().message());
+      }
+
+      auto flushed = kv.flush();
+
+      if (flushed.is_err())
+      {
+        return fail(
+            "failed to flush delete: " +
+            flushed.error().message());
+      }
+
+      auto closed = kv.close();
+
+      if (closed.is_err())
+      {
+        return fail(
+            "failed to close database after delete: " +
+            closed.error().message());
+      }
+    }
+
+    {
+      auto kv = vix::kv::open(data_path());
+
+      const auto user_1 = kv.get("users/1/name");
+      const auto user_2 = kv.get("users/2/name");
+
+      if (user_1.has_value())
+      {
+        return fail(
+            "deleted key should not be recovered: users/1/name");
+      }
+
+      if (!user_2.has_value())
+      {
+        return fail(
+            "existing key should still be recovered: users/2/name");
+      }
+
+      std::cout << "delete phase after reopen\n";
+      std::cout << "-------------------------\n";
+      std::cout << "users/1/name   = deleted\n";
+      std::cout << "users/2/name   = " << *user_2 << '\n';
+      std::cout << "size           = " << kv.size() << '\n';
+
+      const auto stats = kv.stats();
+
+      std::cout << "tombstones     = "
+                << stats.tombstone_count
+                << '\n';
+
+      auto closed = kv.close();
+
+      if (closed.is_err())
+      {
+        return fail(
+            "failed to close database after delete recovery: " +
+            closed.error().message());
+      }
+    }
+
+    return 0;
+  }
+}
 
 int main()
 {
-  auto opened = vix::kv::open_durable("data/examples/persistent.kv");
+  fs::remove_all(data_path());
 
-  if (opened.is_err())
+  const int write_result = write_data();
+
+  if (write_result != 0)
   {
-    std::cerr << "failed to open durable KV: "
-              << opened.error().message()
-              << '\n';
-
-    return 1;
+    return write_result;
   }
 
-  auto db = opened.move_value();
+  const int read_result = read_data_after_reopen();
 
-  auto set_name = db.set(
-      {"app", "name"},
-      "Vix KV");
-
-  if (set_name.is_err())
+  if (read_result != 0)
   {
-    std::cerr << "failed to store app name: "
-              << set_name.error().message()
-              << '\n';
-
-    return 1;
+    return read_result;
   }
 
-  auto set_mode = db.set(
-      {"app", "mode"},
-      "durable");
+  const int delete_result = delete_and_reopen();
 
-  if (set_mode.is_err())
+  if (delete_result != 0)
   {
-    std::cerr << "failed to store app mode: "
-              << set_mode.error().message()
-              << '\n';
-
-    return 1;
+    return delete_result;
   }
 
-  auto flush = db.flush();
-
-  if (flush.is_err())
-  {
-    std::cerr << "failed to flush KV: "
-              << flush.error().message()
-              << '\n';
-
-    return 1;
-  }
-
-  auto name = db.get({"app", "name"});
-
-  if (name.is_err())
-  {
-    std::cerr << "failed to read app name: "
-              << name.error().message()
-              << '\n';
-
-    return 1;
-  }
-
-  auto mode = db.get({"app", "mode"});
-
-  if (mode.is_err())
-  {
-    std::cerr << "failed to read app mode: "
-              << mode.error().message()
-              << '\n';
-
-    return 1;
-  }
-
-  std::cout << "app/name : "
-            << name.value().to_string()
-            << '\n';
-
-  std::cout << "app/mode : "
-            << mode.value().to_string()
-            << '\n';
-
-  auto stats = db.stats();
-
-  std::cout << "keys     : "
-            << stats.key_count
-            << '\n';
-
-  std::cout << "wal      : "
-            << (stats.wal_enabled ? "enabled" : "disabled")
-            << '\n';
-
-  std::cout << "writes   : "
-            << stats.write_count()
-            << '\n';
-
-  auto closed = db.close();
-
-  if (closed.is_err())
-  {
-    std::cerr << "failed to close durable KV: "
-              << closed.error().message()
-              << '\n';
-
-    return 1;
-  }
-
+  std::cout << "persistent example completed\n";
   return 0;
 }

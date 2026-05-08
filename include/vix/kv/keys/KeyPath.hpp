@@ -65,6 +65,9 @@ namespace vix::kv::keys
     /**
      * @brief Creates a key path from string view segments.
      *
+     * This constructor intentionally accepts string literals without
+     * ambiguity.
+     *
      * Example:
      * @code
      * KeyPath key{"users", "42", "profile"};
@@ -83,22 +86,10 @@ namespace vix::kv::keys
     }
 
     /**
-     * @brief Creates a key path from string segments.
-     *
-     * @param parts Ordered key segments.
-     */
-    KeyPath(std::initializer_list<std::string> parts)
-    {
-      segments_.reserve(parts.size());
-
-      for (const std::string &part : parts)
-      {
-        segments_.push_back(part);
-      }
-    }
-
-    /**
      * @brief Creates a key path from an existing container.
+     *
+     * Use this constructor when you already own a vector of strings and want
+     * to move it into the key path.
      *
      * @param parts Ordered key segments.
      */
@@ -118,6 +109,20 @@ namespace vix::kv::keys
       KeyPath path;
       path.push_back(segment);
       return path;
+    }
+
+    /**
+     * @brief Creates a key path with a single C string segment.
+     *
+     * This overload keeps calls like KeyPath::from("users") simple and
+     * unambiguous.
+     *
+     * @param segment Single C string segment.
+     * @return KeyPath instance.
+     */
+    [[nodiscard]] static KeyPath from(const char *segment)
+    {
+      return from(std::string_view{segment});
     }
 
     /**
@@ -144,15 +149,17 @@ namespace vix::kv::keys
     }
 
     /**
-     * @brief Appends one segment by move.
+     * @brief Appends one C string segment.
+     *
+     * This overload avoids ambiguity between std::string_view and
+     * std::string when the caller passes a string literal.
      *
      * @param segment Segment to append.
      * @return Reference to this key path.
      */
-    KeyPath &push_back(std::string segment)
+    KeyPath &push_back(const char *segment)
     {
-      segments_.push_back(std::move(segment));
-      return *this;
+      return push_back(std::string_view{segment});
     }
 
     /**
@@ -164,6 +171,19 @@ namespace vix::kv::keys
      * @return Reference to this key path.
      */
     KeyPath &append(std::string_view segment)
+    {
+      return push_back(segment);
+    }
+
+    /**
+     * @brief Appends one C string segment.
+     *
+     * Alias for push_back().
+     *
+     * @param segment Segment to append.
+     * @return Reference to this key path.
+     */
+    KeyPath &append(const char *segment)
     {
       return push_back(segment);
     }

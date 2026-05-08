@@ -107,6 +107,16 @@ namespace vix::kv::core
     std::size_t index_entries{0};
 
     /**
+     * @brief Number of live keys currently stored.
+     */
+    std::uint64_t live_keys{0};
+
+    /**
+     * @brief Number of tombstones currently stored.
+     */
+    std::uint64_t tombstones{0};
+
+    /**
      * @brief Number of live index entries.
      */
     std::size_t index_live_entries{0};

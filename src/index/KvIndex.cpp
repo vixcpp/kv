@@ -34,7 +34,7 @@ namespace vix::kv::index
   }
 
   core::KvResult<void> KvIndex::put(
-      std::string key,
+      std::string_view key,
       std::uint64_t segment_id,
       std::uint64_t offset,
       std::uint64_t size,
@@ -64,7 +64,7 @@ namespace vix::kv::index
 
     return apply(
         KvIndexEntry::live(
-            std::move(key),
+            std::string(key),
             segment_id,
             offset,
             size,
@@ -72,25 +72,8 @@ namespace vix::kv::index
             timestamp_ms));
   }
 
-  core::KvResult<void> KvIndex::put(
-      std::string_view key,
-      std::uint64_t segment_id,
-      std::uint64_t offset,
-      std::uint64_t size,
-      std::uint64_t sequence,
-      std::uint64_t timestamp_ms)
-  {
-    return put(
-        std::string(key),
-        segment_id,
-        offset,
-        size,
-        sequence,
-        timestamp_ms);
-  }
-
   core::KvResult<void> KvIndex::erase(
-      std::string key,
+      std::string_view key,
       std::uint64_t segment_id,
       std::uint64_t offset,
       std::uint64_t size,
@@ -120,7 +103,7 @@ namespace vix::kv::index
 
     return apply(
         KvIndexEntry::tombstone(
-            std::move(key),
+            std::string(key),
             segment_id,
             offset,
             size,

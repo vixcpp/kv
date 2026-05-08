@@ -1,145 +1,284 @@
-<table>
-  <tr>
-    <td valign="top" width="70%">
+# Vix KV
 
-<h1>Vix kv</h1>
+Durable local-first key-value engine for Vix applications.
 
-<p>
-  <a href="https://x.com/vix_cpp">
-    <img src="https://img.shields.io/badge/X-Follow-black?logo=x" />
-  </a>
-  <a href="https://www.youtube.com/@vixcpp">
-    <img src="https://img.shields.io/badge/YouTube-Subscribe-red?logo=youtube" />
-  </a>
-  <img src="https://img.shields.io/badge/local--first-engine-green" />
-  <img src="https://img.shields.io/badge/WAL-durable-blue" />
-  <img src="https://img.shields.io/badge/C++-20-orange" />
-</p>
-
-<p>
-<b>Vix kv</b> is a <b>durable, local-first key-value engine</b> built for real-world systems.
-</p>
-
-<p>
-It provides <b>crash-safe writes</b>, <b>deterministic state</b>, and a <b>simple API</b>.
-</p>
-
-<p>
-🌍 https://vixcpp.com<br/>
-📘 <a href="./docs/getting-started.md">Getting Started</a> •
-<a href="./docs/api.md">API</a> •
-<a href="./docs/why-kv.md">Why kv</a>
-</p>
-
-</td>
-<td valign="middle" width="30%" align="right">
-<img src="https://res.cloudinary.com/dwjbed2xb/image/upload/v1762524350/vixcpp_etndhz.png" width="180"/>
-</td>
-</tr>
-</table>
-
-<hr />
-
-## Built for the real world
-
-Most databases assume stable networks and perfect infrastructure.
-
-Reality is different.
-
-`kv` is designed for:
-
-- unreliable networks
-- offline environments
-- crash scenarios
-
-Write locally. Persist first. Read instantly.
-
----
-
-## Why developers use kv
-
-- no data loss
-- instant reads
-- no server dependency
-- works offline
-- simple API
-
----
-
-## Features
-
-- Structured keys (`{"users","42"}`)
-- Binary-safe values
-- WAL-backed durability
-- Prefix scan
-- Crash recovery
-- Embedded (no server required)
-
----
-
-## Quick example
+Vix KV provides a small public API for storing, reading, listing, and recovering local data safely.
 
 ```cpp
 #include <vix/kv/kv.hpp>
 
 int main()
 {
-  auto db = vix::kv::open();
+  auto kv = vix::kv::open("data/app");
 
-  db.set({"users","42"}, "Alice");
+  kv.put("hello", "world");
 
-  auto value = db.get({"users","42"});
+  auto value = kv.get("hello");
 
-  if (value)
-  {
-    std::cout << value->to_string() << std::endl;
-  }
+  kv.close();
 }
 ```
 
----
+## Why Vix KV exists
 
-## Documentation
+Modern applications often need local state that survives restarts, network failures, crashes, and offline usage.
 
-- docs/getting-started.md
-- docs/api.md
-- docs/concepts.md
-- docs/architecture.md
-- docs/why-kv.md
-- docs/use-cases.md
-- docs/examples.md
-- docs/transactions.md
-- docs/watch.md
-- docs/sync.md
-- docs/internals.md
-- docs/roadmap.md
+Vix KV is built for that use case:
 
----
+- simple public API
+- durable writes
+- WAL-based recovery
+- memory-only mode for tests
+- structured keys
+- deterministic behavior
+- no heavy database dependency for basic local storage
 
-## Installation
+It is designed as a small storage layer for Vix, Softadastra, and local-first systems.
 
-```bash
-vix add @vix/kv
-vix install
+## Features
+
+- Durable key-value storage
+- Write-ahead log recovery
+- Memory-only mode
+- Fast mode with manual flush
+- Structured keys with KeyPath
+- Prefix listing
+- Tombstone-based deletes
+- Segment storage
+- Snapshot support
+- Compaction support
+- Public result-based API
+- Simple direct API for application code
+
+## Install
+
+Add Vix KV to your project and link against:
+
+```cmake
+target_link_libraries(my_app PRIVATE vix::kv)
 ```
 
-Inside a Vix project:
+Include the public header:
 
-```bash
-vix add @vix/kv
-vix install
+```cpp
+#include <vix/kv/kv.hpp>
 ```
 
----
+## Quick start
 
-## Philosophy
+### Simple durable API
 
-- Local-first
-- Durable by default
-- Deterministic
-- Simple
+```cpp
+auto kv = vix::kv::open("data/app");
 
----
+kv.put("users/1/name", "Ada");
 
-MIT License
+auto name = kv.get("users/1/name");
 
+if (name.has_value())
+{
+  std::cout << *name << '\n';
+}
+
+kv.close();
+```
+
+### Explicit result API
+
+```cpp
+auto opened = vix::kv::open_memory();
+
+if (opened.is_err())
+{
+  std::cerr << opened.error().message() << '\n';
+  return 1;
+}
+
+auto kv = opened.move_value();
+
+auto written = kv.set({"users", "1", "name"}, "Ada");
+
+if (written.is_err())
+{
+  std::cerr << written.error().message() << '\n';
+  return 1;
+}
+
+auto value = kv.get({"users", "1", "name"});
+
+if (value.is_ok())
+{
+  std::cout << value.value().to_string() << '\n';
+}
+```
+
+## Open modes
+
+### Durable
+
+```cpp
+auto kv = vix::kv::open("data/app");
+```
+
+Data is persisted and recovered after restart.
+
+### Memory-only
+
+```cpp
+auto opened = vix::kv::open_memory();
+```
+
+Useful for tests and temporary state.
+
+### Fast
+
+```cpp
+auto opened = vix::kv::open_fast("data/cache");
+```
+
+Durable storage with manual flush control.
+
+```cpp
+kv.set({"a"}, "one");
+kv.set({"b"}, "two");
+
+kv.flush();
+```
+
+## Public API
+
+```cpp
+vix::kv::open();
+vix::kv::open(path);
+vix::kv::open_memory();
+vix::kv::open_durable(path);
+vix::kv::open_fast(path);
+```
+
+```cpp
+kv.put("key", "value");
+kv.get("key");
+
+kv.set({"key"}, "value");
+kv.get({"key"});
+kv.erase(vix::kv::KeyPath{"key"});
+kv.contains({"key"});
+kv.list({"prefix"});
+
+kv.flush();
+kv.close();
+
+kv.size();
+kv.empty();
+kv.stats();
+```
+
+## Structured keys
+
+```cpp
+vix::kv::KeyPath key{"users", "1", "name"};
+
+kv.set(key, "Ada");
+```
+
+Slash keys are also supported by the simple API:
+
+```cpp
+kv.put("users/1/name", "Ada");
+```
+
+## Persistence example
+
+```cpp
+const auto path = "data/app";
+
+{
+  auto kv = vix::kv::open(path);
+
+  kv.put("hello", "world");
+  kv.flush();
+  kv.close();
+}
+
+{
+  auto kv = vix::kv::open(path);
+
+  auto value = kv.get("hello");
+
+  if (value.has_value())
+  {
+    std::cout << *value << '\n';
+  }
+
+  kv.close();
+}
+```
+
+Output:
+
+```
+world
+```
+
+## Build
+
+```sh
+vix build --build-target all -v
+```
+
+Or with CMake:
+
+```sh
+cmake -S . -B build
+cmake --build build
+```
+
+## Tests
+
+```sh
+vix build --build-target all -v
+ctest --test-dir build-ninja --output-on-failure
+```
+
+## Repository layout
+
+```
+include/vix/kv/
+  api/          public API
+  core/         result, errors, config, stats
+  keys/         key path and encoding
+  values/       value model and codec
+  records/      record format
+  wal/          write-ahead log
+  storage/      data files and segments
+  snapshot/     snapshot reader and writer
+  compaction/   segment compaction
+  internal/     KV engine
+
+src/
+  implementation files
+
+tests/
+  unit, wal, storage, snapshot, compaction, engine, api
+
+examples/
+  small usage examples
+```
+
+## Status
+
+Vix KV is currently focused on correctness, recovery, and a stable public API.
+
+Current scope:
+
+- local durable storage
+- WAL recovery
+- public API tests
+- segment and snapshot foundation
+- compaction foundation
+
+Future work may include stronger snapshot integration, advanced compaction policy, richer diagnostics, and tighter Vix runtime integration.
+
+## License
+
+MIT

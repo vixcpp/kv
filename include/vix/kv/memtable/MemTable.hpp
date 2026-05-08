@@ -97,23 +97,29 @@ namespace vix::kv::memtable
      * @return Success or KvError.
      */
     [[nodiscard]] core::KvResult<void> put(
-        std::string key,
-        std::vector<std::uint8_t> value,
+        std::string_view key,
+        const std::vector<std::uint8_t> &value,
         std::uint64_t sequence,
         std::uint64_t timestamp_ms);
 
     /**
-     * @brief Inserts or replaces a live value.
+     * @brief Inserts or replaces a live string value.
+     *
+     * This overload keeps tests and internal usage simple:
+     *
+     * @code
+     * table.put("v1|5:hello", "world", 1, 0);
+     * @endcode
      *
      * @param key Encoded key.
-     * @param value Value bytes.
+     * @param value Text value.
      * @param sequence Sequence number.
      * @param timestamp_ms Timestamp in milliseconds.
      * @return Success or KvError.
      */
     [[nodiscard]] core::KvResult<void> put(
         std::string_view key,
-        const std::vector<std::uint8_t> &value,
+        std::string_view value,
         std::uint64_t sequence,
         std::uint64_t timestamp_ms);
 
@@ -128,7 +134,7 @@ namespace vix::kv::memtable
      * @return Success or KvError.
      */
     [[nodiscard]] core::KvResult<void> erase(
-        std::string key,
+        std::string_view key,
         std::uint64_t sequence,
         std::uint64_t timestamp_ms);
 

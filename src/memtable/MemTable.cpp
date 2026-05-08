@@ -34,8 +34,8 @@ namespace vix::kv::memtable
   }
 
   core::KvResult<void> MemTable::put(
-      std::string key,
-      std::vector<std::uint8_t> value,
+      std::string_view key,
+      const std::vector<std::uint8_t> &value,
       std::uint64_t sequence,
       std::uint64_t timestamp_ms)
   {
@@ -62,27 +62,31 @@ namespace vix::kv::memtable
 
     return apply(
         MemTableEntry::live(
-            std::move(key),
-            std::move(value),
+            std::string(key),
+            value,
             sequence,
             timestamp_ms));
   }
 
   core::KvResult<void> MemTable::put(
       std::string_view key,
-      const std::vector<std::uint8_t> &value,
+      std::string_view value,
       std::uint64_t sequence,
       std::uint64_t timestamp_ms)
   {
+    const std::vector<std::uint8_t> bytes(
+        value.begin(),
+        value.end());
+
     return put(
-        std::string(key),
-        value,
+        key,
+        bytes,
         sequence,
         timestamp_ms);
   }
 
   core::KvResult<void> MemTable::erase(
-      std::string key,
+      std::string_view key,
       std::uint64_t sequence,
       std::uint64_t timestamp_ms)
   {
@@ -102,7 +106,7 @@ namespace vix::kv::memtable
 
     return apply(
         MemTableEntry::tombstone(
-            std::move(key),
+            std::string(key),
             sequence,
             timestamp_ms));
   }

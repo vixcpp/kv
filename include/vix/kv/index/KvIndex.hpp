@@ -93,25 +93,6 @@ namespace vix::kv::index
      * @return Success or KvError.
      */
     [[nodiscard]] core::KvResult<void> put(
-        std::string key,
-        std::uint64_t segment_id,
-        std::uint64_t offset,
-        std::uint64_t size,
-        std::uint64_t sequence,
-        std::uint64_t timestamp_ms);
-
-    /**
-     * @brief Inserts or updates a live index entry.
-     *
-     * @param key Encoded key.
-     * @param segment_id Segment identifier.
-     * @param offset Record offset.
-     * @param size Encoded record size.
-     * @param sequence Record sequence.
-     * @param timestamp_ms Timestamp in milliseconds.
-     * @return Success or KvError.
-     */
-    [[nodiscard]] core::KvResult<void> put(
         std::string_view key,
         std::uint64_t segment_id,
         std::uint64_t offset,
@@ -131,7 +112,7 @@ namespace vix::kv::index
      * @return Success or KvError.
      */
     [[nodiscard]] core::KvResult<void> erase(
-        std::string key,
+        std::string_view key,
         std::uint64_t segment_id,
         std::uint64_t offset,
         std::uint64_t size,

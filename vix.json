@@ -1,7 +1,7 @@
 {
   "name": "kv",
   "namespace": "vix",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "library",
   "include": "include",
   "license": "MIT",
@@ -35,12 +35,6 @@
     {
       "name": "Gaspard Kirira",
       "github": "Gaspardkirira"
-    }
-  ],
-  "deps": [
-    {
-      "id": "softadastra/store",
-      "version": "0.7.1"
     }
   ]
 }

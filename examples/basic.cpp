@@ -10,92 +10,137 @@
  *
  *  Vix KV
  *
- *  Basic memory-only example
+ *  Basic public API example
  *
  */
 
-#include <iostream>
-
 #include <vix/kv/kv.hpp>
+
+#include <iostream>
+#include <string>
+
+namespace
+{
+  int fail(const std::string &message)
+  {
+    std::cerr << message << '\n';
+    return 1;
+  }
+
+  int run_direct_api_example()
+  {
+    auto kv = vix::kv::open("examples_data/basic");
+
+    kv.put("hello", "world");
+    kv.put("users/1/name", "Ada");
+
+    const auto hello = kv.get("hello");
+    const auto user_name = kv.get("users/1/name");
+
+    if (!hello.has_value())
+    {
+      return fail("failed to read key: hello");
+    }
+
+    if (!user_name.has_value())
+    {
+      return fail("failed to read key: users/1/name");
+    }
+
+    std::cout << "direct API\n";
+    std::cout << "----------\n";
+    std::cout << "hello          = " << *hello << '\n';
+    std::cout << "users/1/name   = " << *user_name << '\n';
+    std::cout << "size           = " << kv.size() << "\n\n";
+
+    auto closed = kv.close();
+
+    if (closed.is_err())
+    {
+      return fail(
+          "failed to close direct API database: " +
+          closed.error().message());
+    }
+
+    return 0;
+  }
+
+  int run_result_api_example()
+  {
+    auto opened = vix::kv::open_memory();
+
+    if (opened.is_err())
+    {
+      return fail(
+          "failed to open memory database: " +
+          opened.error().message());
+    }
+
+    auto kv = opened.move_value();
+
+    auto written = kv.set(
+        {"users", "1", "email"},
+        "ada@example.com");
+
+    if (written.is_err())
+    {
+      return fail(
+          "failed to write structured key: " +
+          written.error().message());
+    }
+
+    auto value = kv.get({"users", "1", "email"});
+
+    if (value.is_err())
+    {
+      return fail(
+          "failed to read structured key: " +
+          value.error().message());
+    }
+
+    std::cout << "result API\n";
+    std::cout << "----------\n";
+    std::cout << "users/1/email = "
+              << value.value().to_string()
+              << '\n';
+
+    std::cout << "contains       = "
+              << (kv.contains({"users", "1", "email"}) ? "yes" : "no")
+              << '\n';
+
+    std::cout << "size           = "
+              << kv.size()
+              << "\n\n";
+
+    auto closed = kv.close();
+
+    if (closed.is_err())
+    {
+      return fail(
+          "failed to close result API database: " +
+          closed.error().message());
+    }
+
+    return 0;
+  }
+}
 
 int main()
 {
-  auto opened = vix::kv::open_memory();
+  const int direct_result = run_direct_api_example();
 
-  if (opened.is_err())
+  if (direct_result != 0)
   {
-    std::cerr << "failed to open KV: "
-              << opened.error().message()
-              << '\n';
-
-    return 1;
+    return direct_result;
   }
 
-  auto db = opened.move_value();
+  const int result_api_result = run_result_api_example();
 
-  auto set_result = db.set(
-      {"users", "1", "name"},
-      "Ada");
-
-  if (set_result.is_err())
+  if (result_api_result != 0)
   {
-    std::cerr << "failed to set value: "
-              << set_result.error().message()
-              << '\n';
-
-    return 1;
+    return result_api_result;
   }
 
-  auto value = db.get({"users", "1", "name"});
-
-  if (value.is_err())
-  {
-    std::cerr << "failed to get value: "
-              << value.error().message()
-              << '\n';
-
-    return 1;
-  }
-
-  std::cout << "key   : users/1/name\n";
-  std::cout << "value : "
-            << value.value().to_string()
-            << '\n';
-
-  std::cout << "size  : "
-            << db.size()
-            << '\n';
-
-  if (db.contains({"users", "1", "name"}))
-  {
-    std::cout << "status: key exists\n";
-  }
-
-  auto entries = db.list({"users"});
-
-  if (entries.is_err())
-  {
-    std::cerr << "failed to list values: "
-              << entries.error().message()
-              << '\n';
-
-    return 1;
-  }
-
-  std::cout << "list  : "
-            << entries.value().size()
-            << " entrie(s)\n";
-
-  auto closed = db.close();
-
-  if (closed.is_err())
-  {
-    std::cerr << "failed to close KV: "
-              << closed.error().message()
-              << '\n';
-
-    return 1;
-  }
-
+  std::cout << "basic example completed\n";
   return 0;
 }
