@@ -2,26 +2,34 @@
 
 set(VIX_KV_EXAMPLE_OUTPUT_DIR "${CMAKE_BINARY_DIR}/examples")
 
-add_executable(kv_basic basic.cpp)
-target_link_libraries(kv_basic PRIVATE vix::kv)
-set_target_properties(kv_basic PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${VIX_KV_EXAMPLE_OUTPUT_DIR}"
-)
+function(add_vix_kv_example target source)
+    add_executable(${target} ${source})
 
-add_executable(kv_compact compact.cpp)
-target_link_libraries(kv_compact PRIVATE vix::kv)
-set_target_properties(kv_compact PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${VIX_KV_EXAMPLE_OUTPUT_DIR}"
-)
+    target_link_libraries(${target}
+        PRIVATE
+            vix::kv
+    )
 
-add_executable(kv_list list.cpp)
-target_link_libraries(kv_list PRIVATE vix::kv)
-set_target_properties(kv_list PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${VIX_KV_EXAMPLE_OUTPUT_DIR}"
-)
+    target_compile_features(${target}
+        PRIVATE
+            cxx_std_20
+    )
 
-add_executable(kv_persistent persistent.cpp)
-target_link_libraries(kv_persistent PRIVATE vix::kv)
-set_target_properties(kv_persistent PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${VIX_KV_EXAMPLE_OUTPUT_DIR}"
-)
+    set_target_properties(${target}
+        PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY "${VIX_KV_EXAMPLE_OUTPUT_DIR}"
+    )
+endfunction()
+
+# Small examples
+add_vix_kv_example(kv_hello hello.cpp)
+add_vix_kv_example(kv_memory memory.cpp)
+add_vix_kv_example(kv_delete delete.cpp)
+add_vix_kv_example(kv_stats stats.cpp)
+add_vix_kv_example(kv_persistence_small persistence_small.cpp)
+
+# Larger examples
+add_vix_kv_example(kv_basic basic.cpp)
+add_vix_kv_example(kv_list list.cpp)
+add_vix_kv_example(kv_persistent persistent.cpp)
+add_vix_kv_example(kv_compact compact.cpp)
