@@ -20,13 +20,11 @@
 #include <vix/kv/api/Kv.hpp>
 #include <vix/kv/api/KvOptions.hpp>
 #include <vix/kv/core/KvResult.hpp>
+
 #include <filesystem>
 
 namespace vix::kv
 {
-  namespace api = vix::kv::api;
-  namespace core = vix::kv::core;
-
   /**
    * @brief Opens a KV database with default options.
    *
