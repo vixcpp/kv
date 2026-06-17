@@ -3,28 +3,49 @@
 set(VIX_KV_TEST_OUTPUT_DIR "${CMAKE_BINARY_DIR}/tests")
 
 function(vix_kv_add_test test_name test_source)
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${test_source}")
-        add_executable(${test_name} "${test_source}")
+  if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${test_source}")
+    add_executable(${test_name}
+      "${test_source}"
+    )
 
-        target_link_libraries(${test_name}
-            PRIVATE
-                vix::kv
-        )
+    target_compile_features(${test_name}
+      PRIVATE
+        cxx_std_20
+    )
 
-        target_include_directories(${test_name}
-            PRIVATE
-                ${CMAKE_CURRENT_SOURCE_DIR}
-        )
+    target_link_libraries(${test_name}
+      PRIVATE
+        vix::kv
+    )
 
-        set_target_properties(${test_name} PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY "${VIX_KV_TEST_OUTPUT_DIR}"
-        )
+    target_include_directories(${test_name}
+      PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+    )
 
-        add_test(
-            NAME ${test_name}
-            COMMAND ${test_name}
-        )
+    if (VIX_ENABLE_SANITIZERS AND NOT MSVC)
+      target_compile_options(${test_name}
+        PRIVATE
+          -fno-omit-frame-pointer
+          -fsanitize=address,undefined
+      )
+
+      target_link_options(${test_name}
+        PRIVATE
+          -fsanitize=address,undefined
+      )
     endif()
+
+    set_target_properties(${test_name}
+      PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${VIX_KV_TEST_OUTPUT_DIR}"
+    )
+
+    add_test(
+      NAME ${test_name}
+      COMMAND ${test_name}
+    )
+  endif()
 endfunction()
 
 # ========================
