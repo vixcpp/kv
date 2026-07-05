@@ -139,29 +139,7 @@ namespace
         });
   }
 
-  bool write_raw_bytes(
-      const std::filesystem::path &path,
-      const std::vector<std::uint8_t> &data)
-  {
-    std::filesystem::create_directories(path.parent_path());
-
-    std::ofstream stream(
-        path,
-        std::ios::binary | std::ios::out | std::ios::trunc);
-
-    if (!stream.is_open())
-    {
-      return false;
-    }
-
-    stream.write(
-        reinterpret_cast<const char *>(data.data()),
-        static_cast<std::streamsize>(data.size()));
-
-    return static_cast<bool>(stream);
-  }
-
-  bool same_entry(
+bool same_entry(
       const memtable::MemTableEntry &left,
       const memtable::MemTableEntry &right)
   {

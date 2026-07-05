@@ -109,25 +109,7 @@ namespace
         text.end());
   }
 
-  bool same_record(
-      const records::KvRecord &left,
-      const records::KvRecord &right)
-  {
-    return left.header.magic == right.header.magic &&
-           left.header.format_version == right.header.format_version &&
-           left.header.type == right.header.type &&
-           left.header.header_size == right.header.header_size &&
-           left.header.sequence == right.header.sequence &&
-           left.header.timestamp_ms == right.header.timestamp_ms &&
-           left.header.key_size == right.header.key_size &&
-           left.header.value_size == right.header.value_size &&
-           left.header.header_checksum == right.header.header_checksum &&
-           left.header.payload_checksum == right.header.payload_checksum &&
-           left.key == right.key &&
-           left.value == right.value;
-  }
-
-  bool test_encode_put_record()
+bool test_encode_put_record()
   {
     const auto record = records::KvRecord::put(
         "v1|5:hello",

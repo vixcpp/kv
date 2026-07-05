@@ -756,8 +756,11 @@ namespace
     internal::KvEngine engine{config};
 
     return expect_true(
-        engine.config().memory_only,
-        "engine config accessor should expose memory_only config");
+               !engine.config().enable_wal,
+               "engine config accessor should expose memory_only WAL setting") &&
+           expect_true(
+               engine.config().path.empty(),
+               "engine config accessor should expose memory_only paths");
   }
 }
 
