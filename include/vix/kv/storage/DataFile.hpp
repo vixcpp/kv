@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef VIX_KV_SNAPSHOT_SNAPSHOT_HPP
-#define VIX_KV_SNAPSHOT_SNAPSHOT_HPP
+#ifndef VIX_KV_STORAGE_DATA_FILE_HPP
+#define VIX_KV_STORAGE_DATA_FILE_HPP
 
 #include <cstdint>
 #include <string>
@@ -321,4 +321,4 @@ namespace vix::kv::snapshot
 
 } // namespace vix::kv::snapshot
 
-#endif // VIX_KV_SNAPSHOT_SNAPSHOT_HPP
+#endif // VIX_KV_STORAGE_DATA_FILE_HPP
